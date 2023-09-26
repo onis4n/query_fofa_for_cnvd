@@ -79,7 +79,11 @@ def get_json_data(qu):
             except Exception:
                 delete_proxy(proxy.replace('https://', ''))
                 retry -= 1
+                # 避免过快获取代理IP
+                # 出现 --->Main Error: 'NoneType' object has no attribute 'replace'<--- 即为请求过快
+                time.sleep(1)
         else:
+            # 尝试3次使用代理IP请求失败后，使用主机IP进行请求
             try:
                 jd = requests.get(url=qu, headers=headers, verify=False, timeout=3)
                 return jd.text
@@ -114,7 +118,6 @@ def cname_in_fofa(cn):
     query_url = f'{fofa_url}{qb}&full=false&fields=&ts={ts}&sign={sign}&app_id={app_id}'
     json_data = json.loads(get_json_data(query_url))
     distinct_ips = json_data["data"]["distinct_ips"]
-    print(f'[*]{cn}\n\t独立IP --->{distinct_ips}<---')
 
     if int(distinct_ips) > 20:
         # 获取首标题
@@ -122,11 +125,12 @@ def cname_in_fofa(cn):
         # 获取首标题数
         count = json_data["data"]["ranks"]["title"][0]["count"]
         if count > 15:
+            print(f'[*]{cn}\n\t独立IP --->{distinct_ips}<---')
             print(f'\t首标题 --->{title}<---\n\t存在条数 --->{count}<---')
             wba = openpyxl.load_workbook('result.xlsx')
             wsa = wba.active
             wsa.append([cn, distinct_ips, title, count])
-            wb.save('result.xlsx')
+            wba.save('result.xlsx')
 
 
 if __name__ == '__main__':
