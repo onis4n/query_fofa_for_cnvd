@@ -15,6 +15,6 @@
 
 `python query_fofa_for_cnvd.py`
 
-结果将保存到result.cvs文件中
+结果将保存到result.csv文件中
 
 本项目参考：https://github.com/RaiderZP/cnvd_fofa_gather
