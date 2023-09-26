@@ -124,7 +124,7 @@ def cname_in_fofa(cn):
         title = json_data["data"]["ranks"]["title"][0]["name"]
         # 获取首标题数
         count = json_data["data"]["ranks"]["title"][0]["count"]
-        if count > 15:
+        if count > 15 or distinct_ips > 100:
             print(f'[*]{cn}\n\t独立IP --->{distinct_ips}<---')
             print(f'\t首标题 --->{title}<---\n\t存在条数 --->{count}<---')
             wba = openpyxl.load_workbook('result.xlsx')
