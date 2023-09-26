@@ -77,7 +77,7 @@ def get_json_data(qu):
                 jd = requests.get(url=qu, headers=headers, verify=False, timeout=3, proxies={'http': proxy, 'https': proxy})
                 return jd.text
             except Exception:
-                delete_proxy(proxy)
+                delete_proxy(proxy.replace('https://', ''))
                 retry -= 1
         else:
             try:
