@@ -5,6 +5,7 @@ import json
 import time
 import base64
 import warnings
+import openpyxl
 import requests
 import urllib.parse
 import urllib3
@@ -122,13 +123,17 @@ def cname_in_fofa(cn):
         count = json_data["data"]["ranks"]["title"][0]["count"]
         if count > 15:
             print(f'\t首标题 --->{title}<---\n\t存在条数 --->{count}<---')
-            with open('result.csv', 'a+') as rf:
-                rf.write(f'{cn}, {distinct_ips}, {title}, {count}\n')
+            wba = openpyxl.load_workbook('result.xlsx')
+            wsa = wba.active
+            wsa.append([cn, distinct_ips, title, count])
+            wb.save('result.xlsx')
 
 
 if __name__ == '__main__':
-    with open('result.csv', 'w') as f:
-        f.write('公司名称, 独立IP数, 首标题, 首标题总数\n')
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(['公司名称', '独立IP数', '首标题', '首标题总数'])
+    wb.save('result.xlsx')
 
     with open('company.txt', 'r', encoding='utf-8') as file:
         for line in file:
