@@ -122,12 +122,12 @@ def cname_in_fofa(cn):
         count = json_data["data"]["ranks"]["title"][0]["count"]
         if count > 15:
             print(f'\t首标题 --->{title}<---\n\t存在条数 --->{count}<---')
-            with open('result.cvs', 'a+') as rf:
+            with open('result.csv', 'a+') as rf:
                 rf.write(f'{cn}, {distinct_ips}, {title}, {count}\n')
 
 
 if __name__ == '__main__':
-    with open('result.cvs', 'w') as f:
+    with open('result.csv', 'w') as f:
         f.write('公司名称, 独立IP数, 首标题, 首标题总数\n')
 
     with open('company.txt', 'r', encoding='utf-8') as file:
