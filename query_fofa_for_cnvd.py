@@ -1,7 +1,6 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 import re
-import json
 import time
 import base64
 import warnings
@@ -71,22 +70,23 @@ def get_proxy():
 def get_json_data(qu):
     retry = 3
     while True:
+        # 避免请求过快
+        time.sleep(1)
         if retry > 0:
             proxy = get_proxy()
             try:
-                jd = requests.get(url=qu, headers=headers, verify=False, timeout=3, proxies={'http': proxy, 'https': proxy})
-                return jd.text
+                jd = requests.get(url=qu, headers=headers, verify=False, timeout=3, proxies={'http': proxy, 'https': proxy}).json()
+                if jd['data']["distinct_ips"]:
+                    return jd
             except Exception:
                 delete_proxy(proxy.replace('https://', ''))
                 retry -= 1
-                # 避免过快获取代理IP
-                # 出现 --->Main Error: 'NoneType' object has no attribute 'replace'<--- 即为请求过快
-                time.sleep(1)
         else:
             # 尝试3次使用代理IP请求失败后，使用主机IP进行请求
             try:
-                jd = requests.get(url=qu, headers=headers, verify=False, timeout=3)
-                return jd.text
+                jd = requests.get(url=qu, headers=headers, verify=False, timeout=3).json()
+                if jd['data']["distinct_ips"]:
+                    return jd
             except Exception:
                 retry = 3
 
@@ -105,7 +105,7 @@ def rsa_sign(d):
     return url_encoded_signature
 
 
-def cname_in_fofa(cn):
+def query_in_fofa(cn):
     fofa_url = 'https://api.fofa.info/v1/search/stats?qbase64='
     app_id = '9e9fb94330d97833acfbc041ee1a76793f1bc691'
     # 进行RSA签名
@@ -116,7 +116,7 @@ def cname_in_fofa(cn):
     sign = rsa_sign(data)
     # 构造请求url
     query_url = f'{fofa_url}{qb}&full=false&fields=&ts={ts}&sign={sign}&app_id={app_id}'
-    json_data = json.loads(get_json_data(query_url))
+    json_data = get_json_data(query_url)
     distinct_ips = json_data["data"]["distinct_ips"]
 
     if int(distinct_ips) > 20:
@@ -147,30 +147,30 @@ if __name__ == '__main__':
                     cname = cname[:re.search(r'科技', cname).end()]
                     if '(' in cname:
                         cname = cname.replace(re.search(r"\(.*?\)", cname).group(), '')
-                    cname_in_fofa(cname)
+                    query_in_fofa(cname)
                 elif '技术' in cname:
                     cname = cname[:re.search(r'技术', cname).end()]
                     if '(' in cname:
                         cname = cname.replace(re.search(r"\(.*?\)", cname).group(), '')
-                    cname_in_fofa(cname)
+                    query_in_fofa(cname)
                 elif '软件' in cname:
                     cname = cname[:re.search(r'软件', cname).end()]
                     if '(' in cname:
                         cname = cname.replace(re.search(r"\(.*?\)", cname).group(), '')
-                    cname_in_fofa(cname)
+                    query_in_fofa(cname)
                 elif '股份' in cname:
                     cname = cname[:re.search(r'股份', cname).end()]
                     if '(' in cname:
                         cname = cname.replace(re.search(r"\(.*?\)", cname).group(), '')
-                    cname_in_fofa(cname)
+                    query_in_fofa(cname)
                 elif '有限' in cname:
                     cname = cname[:re.search(r'有限', cname).end()]
                     if '(' in cname:
                         cname = cname.replace(re.search(r"\(.*?\)", cname).group(), '')
-                    cname_in_fofa(cname)
+                    query_in_fofa(cname)
                 else:
                     if '(' in cname:
                         cname = cname.replace(re.search(r"\(.*?\)", cname).group(), '')
-                    cname_in_fofa(cname)
+                    query_in_fofa(cname)
             except Exception as e1:
                 print(f'Main Error: {e1}')
