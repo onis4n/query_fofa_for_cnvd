@@ -79,7 +79,8 @@ def get_json_data(qu):
                 if jd['data']["distinct_ips"]:
                     return jd
             except Exception:
-                delete_proxy(proxy.replace('https://', ''))
+                if proxy:
+                    delete_proxy(proxy.replace('https://', ''))
                 retry -= 1
         else:
             # 尝试3次使用代理IP请求失败后，使用主机IP进行请求
@@ -109,7 +110,7 @@ def query_in_fofa(cn):
     fofa_url = 'https://api.fofa.info/v1/search/stats?qbase64='
     app_id = '9e9fb94330d97833acfbc041ee1a76793f1bc691'
     # 进行RSA签名
-    qb = base64.b64encode(f'"{cn}"'.encode()).decode()
+    qb = base64.b64encode(f'body="{cn}" && country="CN" && (title="登录" || title="管理" || title="登陆" || title="后台" || title="平台" || title="系统")'.encode()).decode()
     ts = int(time.time()) * 1000
     data = f'fullfalseqbase64{qb}ts{ts}'
     qb = urllib.parse.quote(qb, safe='')
@@ -119,18 +120,18 @@ def query_in_fofa(cn):
     json_data = get_json_data(query_url)
     distinct_ips = json_data["data"]["distinct_ips"]
 
-    if int(distinct_ips) > 20:
+    if int(distinct_ips) > 15:
         # 获取首标题
         title = json_data["data"]["ranks"]["title"][0]["name"]
         # 获取首标题数
         count = json_data["data"]["ranks"]["title"][0]["count"]
-        if count > 15 or distinct_ips > 100:
-            print(f'[*]{cn}\n\t独立IP --->{distinct_ips}<---')
-            print(f'\t首标题 --->{title}<---\n\t存在条数 --->{count}<---')
-            wba = openpyxl.load_workbook('result.xlsx')
-            wsa = wba.active
-            wsa.append([cn, distinct_ips, title, count])
-            wba.save('result.xlsx')
+        print(f'[*]{cn}\n\t独立IP --->{distinct_ips}<---')
+        print(f'\t首标题 --->{title}<---\n\t存在条数 --->{count}<---')
+        # 结果写入result.xlsx
+        wba = openpyxl.load_workbook('result.xlsx')
+        wsa = wba.active
+        wsa.append([cn, distinct_ips, title, count])
+        wba.save('result.xlsx')
 
 
 if __name__ == '__main__':
