@@ -60,27 +60,32 @@ def delete_proxy(proxy):
 
 
 def get_proxy():
-    d = requests.get("http://127.0.0.1:5010/get/").json()
-    p = d.get("proxy")
-    if d.get("https"):
-        p = f'https://{p}'
-    return p
+    try:
+        d = requests.get("http://127.0.0.1:5010/get/").json()
+        p = d.get("proxy")
+        if d.get("https"):
+            p = f'https://{p}'
+        return p
+    except Exception:
+        return None
 
 
 def get_json_data(qu):
     retry = 3
     while True:
-        # 避免请求过快
-        time.sleep(1)
         if retry > 0:
-            proxy = get_proxy()
+            while True:
+                # 避免请求过快
+                time.sleep(1)
+                proxy = get_proxy()
+                if proxy:
+                    break
             try:
                 jd = requests.get(url=qu, headers=headers, verify=False, timeout=3, proxies={'http': proxy, 'https': proxy}).json()
                 if jd['data']["distinct_ips"]:
                     return jd
             except Exception:
-                if proxy:
-                    delete_proxy(proxy.replace('https://', ''))
+                delete_proxy(proxy.replace('https://', ''))
                 retry -= 1
         else:
             # 尝试3次使用代理IP请求失败后，使用主机IP进行请求
