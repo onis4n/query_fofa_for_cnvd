@@ -29,4 +29,6 @@
 
 --登录注册账号时相对不登录时快一点
 
+**因此建议携带会员账号的`Authorization`和`Cookie`进行搜索，可使用`query_fofa_for_cnvd_login.py`**
+
 本项目参考：https://github.com/RaiderZP/cnvd_fofa_gather
