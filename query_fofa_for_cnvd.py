@@ -55,46 +55,42 @@ headers = {
 }
 
 
-def delete_proxy(proxy):
-    requests.get("http://127.0.0.1:5010/delete/?proxy={}".format(proxy))
+def delete_proxy(p):
+    requests.get("http://127.0.0.1:5010/delete/?proxy={}".format(p))
 
 
 def get_proxy():
+    time.sleep(1)
     try:
         d = requests.get("http://127.0.0.1:5010/get/").json()
         p = d.get("proxy")
         if d.get("https"):
             p = f'https://{p}'
+        else:
+            p = f'http://{p}'
         return p
     except Exception:
         return None
 
 
+proxy = get_proxy()
+
+
 def get_json_data(qu):
-    retry = 3
+    global proxy
     while True:
-        if retry > 0:
+        time.sleep(3)
+        try:
+            response = requests.get(url=qu, headers=headers, verify=False, timeout=3, proxies={'http': proxy, 'https': proxy})
+            jd = response.json()
+            if jd['data']["distinct_ips"]:
+                return jd
+        except Exception:
+            delete_proxy(proxy.replace('https://', ''))
             while True:
-                # 避免请求过快
-                time.sleep(1)
                 proxy = get_proxy()
                 if proxy:
                     break
-            try:
-                jd = requests.get(url=qu, headers=headers, verify=False, timeout=3, proxies={'http': proxy, 'https': proxy}).json()
-                if jd['data']["distinct_ips"]:
-                    return jd
-            except Exception:
-                delete_proxy(proxy.replace('https://', ''))
-                retry -= 1
-        else:
-            # 尝试3次使用代理IP请求失败后，使用主机IP进行请求
-            try:
-                jd = requests.get(url=qu, headers=headers, verify=False, timeout=3).json()
-                if jd['data']["distinct_ips"]:
-                    return jd
-            except Exception:
-                retry = 3
 
 
 def rsa_sign(d):
@@ -127,7 +123,7 @@ def query_in_fofa(cn):
 
     if int(distinct_ips) > 15:
         # 获取首标题
-        title = json_data["data"]["ranks"]["title"][0]["name"]
+        title = (json_data["data"]["ranks"]["title"][0]["name"]).strip()
         # 获取首标题数
         count = json_data["data"]["ranks"]["title"][0]["count"]
         print(f'[*]{cn}\n\t独立IP --->{distinct_ips}<---')
@@ -170,7 +166,7 @@ if __name__ == '__main__':
                         cname = cname.replace(re.search(r"\(.*?\)", cname).group(), '')
                     query_in_fofa(cname)
                 elif '有限' in cname:
-                    cname = cname[:re.search(r'有限', cname).end()]
+                    cname = cname[:re.search(r'有限', cname).end()-2]
                     if '(' in cname:
                         cname = cname.replace(re.search(r"\(.*?\)", cname).group(), '')
                     query_in_fofa(cname)
