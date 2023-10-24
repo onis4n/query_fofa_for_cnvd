@@ -62,12 +62,7 @@ def delete_proxy(p):
 def get_proxy():
     time.sleep(1)
     try:
-        d = requests.get("http://127.0.0.1:5010/get/").json()
-        p = d.get("proxy")
-        if d.get("https"):
-            p = f'https://{p}'
-        else:
-            p = f'http://{p}'
+        p = requests.get("http://127.0.0.1:5010/get/").json().get("proxy")
         return p
     except Exception:
         return None
@@ -81,12 +76,11 @@ def get_json_data(qu):
     while True:
         time.sleep(3)
         try:
-            response = requests.get(url=qu, headers=headers, verify=False, timeout=3, proxies={'http': proxy, 'https': proxy})
-            jd = response.json()
-            if jd['data']["distinct_ips"]:
-                return jd
+            response = requests.get(url=qu, headers=headers, verify=False, timeout=3, proxies={'http': proxy}).json()
+            if response['data']["distinct_ips"]:
+                return response
         except Exception:
-            delete_proxy(proxy.replace('https://', ''))
+            delete_proxy(proxy)
             while True:
                 proxy = get_proxy()
                 if proxy:
