@@ -73,18 +73,28 @@ proxy = get_proxy()
 
 def get_json_data(qu):
     global proxy
+    retry = 9
     while True:
         time.sleep(3)
         try:
-            response = requests.get(url=qu, headers=headers, verify=False, timeout=3, proxies={'http': proxy}).json()
+            response = requests.get(url=qu, headers=headers, verify=False, timeout=3, proxies={'http': f'http://{proxy}', 'https': f'https://{proxy}'}).json()
             if response['data']["distinct_ips"]:
                 return response
         except Exception:
-            delete_proxy(proxy)
-            while True:
-                proxy = get_proxy()
-                if proxy:
-                    break
+            retry -= 1
+            if retry < 1:
+                try:
+                    response = requests.get(url=qu, headers=headers, verify=False, timeout=3).json()
+                    if response['data']["distinct_ips"]:
+                        return response
+                except Exception:
+                    retry = 9
+            else:
+                delete_proxy(proxy)
+                while True:
+                    proxy = get_proxy()
+                    if proxy:
+                        break
 
 
 def rsa_sign(d):
